@@ -5,32 +5,50 @@ namespace App\Http\Controllers;
 use App\Http\Resources\RoomTypeLatestRateResource;
 use App\Http\Resources\RoomTypeSummaryResource;
 use App\Models\RoomType;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Log;
 
 class RoomTypeController extends Controller
 {
-    public function summary(): AnonymousResourceCollection
+    public function summary(): AnonymousResourceCollection|JsonResponse
     {
-        $roomTypes = RoomType::select('room_types.id', 'room_types.name')
-            ->withCount('rates')
-            ->withAvg('rates', 'price')
-            ->orderBy('room_types.name')
-            ->get();
+        try {
+            $roomTypes = RoomType::select('room_types.id', 'room_types.name')
+                ->withCount('rates')
+                ->withAvg('rates', 'price')
+                ->orderBy('room_types.name')
+                ->get();
 
-        return RoomTypeSummaryResource::collection($roomTypes);
+            return RoomTypeSummaryResource::collection($roomTypes);
+        } catch (\Exception $e) {
+            Log::error('Error al obtener el resumen de tipos de habitación: '.$e->getMessage());
+
+            return response()->json([
+                'message' => 'No pudimos cargar la información de los tipos de habitación. Por favor, inténtelo de nuevo más tarde.',
+            ], 500);
+        }
     }
 
-    public function latestRates(): AnonymousResourceCollection
+    public function latestRates(): AnonymousResourceCollection|JsonResponse
     {
-        $roomTypes = RoomType::select('room_types.id', 'room_types.name')
-            ->with(['rates' => function ($query) {
-                $query->select('id', 'room_type_id', 'price', 'valid_from')
-                    ->orderByDesc('valid_from')
-                    ->limit(1);
-            }])
-            ->orderBy('room_types.name')
-            ->get();
+        try {
+            $roomTypes = RoomType::select('room_types.id', 'room_types.name')
+                ->with(['rates' => function ($query) {
+                    $query->select('id', 'room_type_id', 'price', 'valid_from')
+                        ->orderByDesc('valid_from')
+                        ->limit(1);
+                }])
+                ->orderBy('room_types.name')
+                ->get();
 
-        return RoomTypeLatestRateResource::collection($roomTypes);
+            return RoomTypeLatestRateResource::collection($roomTypes);
+        } catch (\Exception $e) {
+            Log::error('Error al obtener las tarifas más recientes: '.$e->getMessage());
+
+            return response()->json([
+                'message' => 'No pudimos cargar las tarifas más recientes de los tipos de habitación. Por favor, inténtelo de nuevo más tarde.',
+            ], 500);
+        }
     }
 }
