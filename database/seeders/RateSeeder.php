@@ -21,6 +21,9 @@ class RateSeeder extends Seeder
             'Penthouse' => 500,
         ];
 
+        $monthsBack = 3;
+        $monthsForward = 8;
+
         foreach ($prices as $typeName => $basePrice) {
             $roomType = RoomType::where('name', $typeName)->first();
 
@@ -28,17 +31,13 @@ class RateSeeder extends Seeder
                 continue;
             }
 
-            Rate::create([
-                'room_type_id' => $roomType->id,
-                'price' => $basePrice,
-                'valid_from' => now()->subMonth()->format('Y-m-d'),
-            ]);
-
-            Rate::create([
-                'room_type_id' => $roomType->id,
-                'price' => $basePrice * 1.2,
-                'valid_from' => now()->addMonth()->format('Y-m-d'),
-            ]);
+            for ($i = -$monthsBack; $i <= $monthsForward; $i++) {
+                Rate::create([
+                    'room_type_id' => $roomType->id,
+                    'price' => $basePrice,
+                    'valid_from' => now()->addMonths($i)->format('Y-m-d'),
+                ]);
+            }
         }
     }
 }
