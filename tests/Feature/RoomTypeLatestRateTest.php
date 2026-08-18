@@ -7,10 +7,20 @@ use App\Models\RoomType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * Tests the GET /api/room-types/latest-rates endpoint.
+ *
+ * Verifies that each room type is paired with its single most recent
+ * rate (by valid_from date), that null is returned when no rates exist,
+ * and that results are alphabetically ordered.
+ */
 class RoomTypeLatestRateTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * The most recent rate per room type is selected by valid_from descending.
+     */
     public function test_latest_rates_returns_most_recent_rate_per_room_type(): void
     {
         $single = RoomType::create(['name' => 'Single']);
@@ -62,6 +72,9 @@ class RoomTypeLatestRateTest extends TestCase
             ]);
     }
 
+    /**
+     * A room type with no rates returns latest_rate as null.
+     */
     public function test_latest_rates_returns_null_when_no_rates_exist(): void
     {
         $roomType = RoomType::create(['name' => 'Studio']);
@@ -76,6 +89,9 @@ class RoomTypeLatestRateTest extends TestCase
             ]);
     }
 
+    /**
+     * When no room types exist, the data array is empty.
+     */
     public function test_latest_rates_returns_empty_array_when_no_room_types_exist(): void
     {
         $response = $this->getJson('/api/room-types/latest-rates');
@@ -83,6 +99,9 @@ class RoomTypeLatestRateTest extends TestCase
         $response->assertOk()->assertJsonCount(0, 'data');
     }
 
+    /**
+     * When multiple rates share the same valid_from, one of them is returned.
+     */
     public function test_latest_rates_picks_highest_valid_from_when_multiple_share_date(): void
     {
         $roomType = RoomType::create(['name' => 'Queen']);
@@ -106,6 +125,9 @@ class RoomTypeLatestRateTest extends TestCase
         $this->assertEquals('2026-06-01', $latestRate['valid_from']);
     }
 
+    /**
+     * Results are sorted alphabetically by room type name.
+     */
     public function test_latest_rates_results_are_ordered_by_name(): void
     {
         RoomType::create(['name' => 'King']);

@@ -7,10 +7,19 @@ use App\Models\RoomType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * Tests the GET /api/room-types/summary endpoint.
+ *
+ * Verifies that room types are returned with correct rate counts,
+ * average prices, empty-state handling, and alphabetical ordering.
+ */
 class RoomTypeSummaryTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * Each room type shows the correct number of rates and the average price.
+     */
     public function test_summary_returns_room_types_with_rate_count_and_average_price(): void
     {
         $single = RoomType::create(['name' => 'Single']);
@@ -43,6 +52,9 @@ class RoomTypeSummaryTest extends TestCase
             ]);
     }
 
+    /**
+     * A room type with zero rates reports a count of 0 and a null average.
+     */
     public function test_summary_returns_zero_count_and_null_average_for_room_type_without_rates(): void
     {
         $penthouse = RoomType::create(['name' => 'Penthouse']);
@@ -58,6 +70,9 @@ class RoomTypeSummaryTest extends TestCase
             ]);
     }
 
+    /**
+     * When no room types exist, the data array is empty.
+     */
     public function test_summary_returns_empty_array_when_no_room_types_exist(): void
     {
         $response = $this->getJson('/api/room-types/summary');
@@ -65,6 +80,9 @@ class RoomTypeSummaryTest extends TestCase
         $response->assertOk()->assertJsonCount(0, 'data');
     }
 
+    /**
+     * Average price is computed correctly across rates with different values.
+     */
     public function test_summary_averages_multiple_different_prices(): void
     {
         $roomType = RoomType::create(['name' => 'Suite']);
@@ -93,6 +111,9 @@ class RoomTypeSummaryTest extends TestCase
             ]);
     }
 
+    /**
+     * Results are sorted alphabetically by room type name.
+     */
     public function test_summary_results_are_ordered_by_name(): void
     {
         RoomType::create(['name' => 'King']);

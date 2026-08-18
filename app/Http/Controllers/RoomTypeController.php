@@ -9,8 +9,18 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Handles room type listing endpoints for the hotel pricing API.
+ */
 class RoomTypeController extends Controller
 {
+    /**
+     * Return every room type with its rate count and average price.
+     *
+     * Fetches all room types ordered by name, annotated with the total
+     * number of associated rates and the average price across those rates.
+     * Room types with no rates return a count of 0 and a null average.
+     */
     public function summary(): AnonymousResourceCollection|JsonResponse
     {
         try {
@@ -30,6 +40,13 @@ class RoomTypeController extends Controller
         }
     }
 
+    /**
+     * Return every room type paired with its most recent rate.
+     *
+     * Eager-loads at most one rate per room type, selected by the
+     * latest `valid_from` date (descending). Room types without any
+     * rates receive a null `latest_rate` value.
+     */
     public function latestRates(): AnonymousResourceCollection|JsonResponse
     {
         try {
